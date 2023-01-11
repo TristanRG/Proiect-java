@@ -52,25 +52,7 @@ public class Main {
         container.setExtendedState(JFrame.MAXIMIZED_BOTH);
         container.setVisible(true);
 
-        JButton button = new JButton("Show Highest Medie");
-        button.addActionListener(event -> {
-            // button
-            double highestMedie = Double.MIN_VALUE;
-            for (int i = 0; i < model.getRowCount(); i++) {
-                double medie = Double.parseDouble(model.getValueAt(i, 3).toString());
-                if (medie > highestMedie) {
-                    highestMedie = medie;
-                }
-            }
-
-            // dialog
-            JOptionPane.showMessageDialog(container, "The highest medie is " + highestMedie);
-        });
-        container.add(button);
-        button.setBounds(50,50,100,100);
-        button.setSize(300, 300);
-        button.setLayout(null);
-        button.setVisible(true);
+     
 
         // Menu
         JMenu menu = new JMenu("Options");
