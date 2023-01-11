@@ -1,7 +1,8 @@
 package org.ieti.Tristan;
 import java.awt.*;
 import javax.swing.*;
-
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JOptionPane;
 
 public class Main {
 
@@ -12,37 +13,66 @@ public class Main {
             "Admis"};
 
     private static final Object[][] DATA = {
-            {"A20134", 5, 9, 1, "Da"},
+            {"A20134", "5", "9", "1", "Da"},
             {"B20112", "3", "3", "3", "Nu"},
-            {"C40323", "2", "5", "2", "Da"},
-            {"B30221", "6", "5", "20", "Nu"},
-            {"D20122", "3", "2", "10", "Nu"}
     };
 
     public static void main(String[] args) {
 
-        JFrame container = new JFrame("Admitere");
-        JTable table = new JTable(DATA, COLUMN_NAMES);
+        DefaultTableModel model = new DefaultTableModel(DATA, COLUMN_NAMES) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return true;
+            }
+        };
+
+        for (int i = 0; i < model.getRowCount(); i++) {
+            updateMedieAndAdmis(model, i);
+        }
+
+        model.addTableModelListener(event -> {
+            if (event.getColumn() == 1 || event.getColumn() == 2) {
+                updateMedieAndAdmis(model, event.getFirstRow());
+            }
+        });
+
+        JTable table = new JTable(model);
         table.setCellSelectionEnabled(true);
-
-        ListSelectionListenerImpl listSelectionListener = new ListSelectionListenerImpl(table);
-
         ListSelectionModel select = table.getSelectionModel();
         select.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        select.addListSelectionListener(listSelectionListener);
-
         JScrollPane scrollPane = new JScrollPane(table);
 
+        // Frame
+        JFrame container = new JFrame("Admitere");
         container.add(scrollPane);
         container.setLayout(new BorderLayout());
         container.add(table.getTableHeader(), BorderLayout.PAGE_START);
         container.add(table, BorderLayout.CENTER);
-        container.setVisible(true);
         container.setSize(1920, 1080);
+        container.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        container.setVisible(true);
 
+        JButton button = new JButton("Show Highest Medie");
+        button.addActionListener(event -> {
+            // button
+            double highestMedie = Double.MIN_VALUE;
+            for (int i = 0; i < model.getRowCount(); i++) {
+                double medie = Double.parseDouble(model.getValueAt(i, 3).toString());
+                if (medie > highestMedie) {
+                    highestMedie = medie;
+                }
+            }
 
-        /// meniu
+            // dialog
+            JOptionPane.showMessageDialog(container, "The highest medie is " + highestMedie);
+        });
+        container.add(button);
+        button.setBounds(50,50,100,100);
+        button.setSize(300, 300);
+        button.setLayout(null);
+        button.setVisible(true);
 
+        // Menu
         JMenu menu = new JMenu("Options");
 
         JMenuBar menuBar = new JMenuBar();
@@ -56,36 +86,47 @@ public class Main {
         menuBar.add(menu);
 
         container.setJMenuBar(menuBar);
-        container.setSize(1940, 1080);
+        container.setSize(1920, 1080);
         container.setLayout(null);
         container.setVisible(true);
 
-        ///
-
+        // Popup
         JPopupMenu popupMenu = new JPopupMenu();
+
         JMenuItem menuItemAdd = new JMenuItem("Add New Row");
+        menuItemAdd.addActionListener(event -> {
+            model.addRow(new Object[]{"", "", "", "", ""});
+        });
+
         JMenuItem menuItemRemove = new JMenuItem("Remove Current Row");
+        menuItemRemove.addActionListener(event -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                ((DefaultTableModel) table.getModel()).removeRow(selectedRow);
+            }
+        });
+
         JMenuItem menuItemRemoveAll = new JMenuItem("Remove All Rows");
+        menuItemRemoveAll.addActionListener(event -> {
+            int rowCount = table.getRowCount();
+            for (int i = rowCount - 1; i >= 0; i--) {
+                ((DefaultTableModel) table.getModel()).removeRow(i);
+            }
+        });
 
         popupMenu.add(menuItemAdd);
         popupMenu.add(menuItemRemove);
         popupMenu.add(menuItemRemoveAll);
         table.setComponentPopupMenu(popupMenu);
 
-        /// button
-
-        JFrame frame = new JFrame("Adauga o coloana");
-        JButton b = new JButton("Click");
-        b.setBounds(80, 80, 80, 50);
-        frame.add(b);
-        frame.setSize(300, 300);
-        frame.setLayout(null);
-        frame.setVisible(true);
-        JTextField d = new JTextField("Change me...");
-        d.setBounds(50, 200, 200, 30);
-        frame.add(d);
-        frame.setSize(300, 300);
-        frame.setLayout(null);
-        frame.setVisible(true);
+    }
+    private static void updateMedieAndAdmis(DefaultTableModel model, int row) {
+        double nota1 = Double.parseDouble(model.getValueAt(row, 1).toString());
+        double nota2 = Double.parseDouble(model.getValueAt(row, 2).toString());
+        double medie = (nota1 + nota2) / 2;
+        model.setValueAt(medie, row, 3);
+        model.setValueAt(medie >= 6 ? "Da" : "Nu", row, 4);
     }
 }
+
+
